@@ -28,9 +28,9 @@ client_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 while True:
     # Solicitar arquivo ao usuário
-    filename = input("Digite o nome do arquivo a ser baixado (ou 'exit' para sair): ")
+    filename = input("Digite o nome do arquivo (ou sair): ")
 
-    if filename.lower() == "exit":
+    if filename.lower() == "sair":
         break
 
     # Enviar a requisição ao servidor
