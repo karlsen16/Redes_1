@@ -1,5 +1,6 @@
 import socket
 import os
+import shutil
 
 # Endereço e porta do servidor
 SERVER_HOST = 'localhost'
@@ -55,16 +56,20 @@ client_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 if not os.path.exists(SAVE_FOLDER):
     os.makedirs(SAVE_FOLDER)
 
+novo_get = True
+filename = ""
+counter = 0
+tent_max = 2
 while True:
-    # Solicitar arquivo ao usuário
-    filename = input("\n############\nDigite o nome do arquivo (ou sair): ")
+    if novo_get:
+        # Solicitar arquivo ao usuário
+        filename = input("\n############\nDigite o nome do arquivo (ou sair): ")
+        if filename.lower() == "sair":
+            break
 
-    if filename.lower() == "sair":
-        break
-
-    # Enviar a requisição ao servidor
-    request = f"GET {filename}"
-    client_sock.sendto(request.encode('utf-8'), (SERVER_HOST, SERVER_PORT))
+        # Enviar a requisição ao servidor
+        request = f"GET {filename}"
+        client_sock.sendto(request.encode('utf-8'), (SERVER_HOST, SERVER_PORT))
 
     # Receber o arquivo do servidor
     save_path = receive_file(filename, client_sock)
@@ -81,9 +86,24 @@ while True:
             discard_data(save_path)
 
         print(f"Arquivo '{filename}' está pronto para uso.\n############\n")
+        novo_get = True
+        counter = 0
     else:
-        print("Erro: O arquivo recebido está corrompido.")
-        print("Solicitando ao servidor para reenviar as partes faltando...")
+        if counter < tent_max:
+            print("Erro: O arquivo recebido está corrompido.")
+            print("Solicitando ao servidor para reenviar as partes faltando...")
+            print("(Tentativas restantes:", tent_max-counter, ")")
+            resend_request = f"RESEND {filename} {os.path.getsize(save_path)}"
+            client_sock.sendto(resend_request.encode('utf-8'), (SERVER_HOST, SERVER_PORT))
+            novo_get = False
+            counter += 1
+        else:
+            print("Máximo de tentativas excedido.\n########################\n")
+            novo_get = True
+            counter = 0
+
+# Remove a pasta de arquivos recebidos
+shutil.rmtree("arquivos_recebidos")
 
 print("Cliente encerrado.")
 # Fechar o socket do cliente
