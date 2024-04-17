@@ -1,3 +1,4 @@
 /arquivos_recebidos/*
 /.venv/
 /.venv/*
+/.venv/*/*
